@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <title>気球バルーンゲーム</title>
+        <style>
+            body{
+                margin: 0;
+                font-family: sans-serif;
+                background-color: #333;
+                display: flex;
+                justify-content: center;
+                align-items: top;
+                height: 100vh;
+            }
+            #game-area{
+                width:100%;
+                height: 100%;
+                background-color: #fff;
+                border-radius: 10px;
+                overflow: hidden;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+                display: flex;
+                flex-direction: column;
+
+            }
+            #sky{
+                flex:1;
+                background: linear-gradient(to bottom, #87ceeb, #E0F6FF);
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height:70%;
+            }
+            #counter-display{
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                font-weight:bold;
+                font-size: 1.2rem;
+                padding: 5px 10px;
+                background-color: rgba(255, 255, 255, 0.8);
+                border-radius: 20px;
+            }
+            #hot-air-balloon{
+                position: relative;
+                width: 75%;
+                height: 75%;
+                margin-top: 5%;
+            }
+            #balloons-container{
+                position: absolute;
+                top: 10%;
+                left: 25%;
+                width: 50%;
+                height: 50%;
+            }
+            .balloon{
+                position: absolute;
+                width: 40px;
+                height: 45px;
+                border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+                transition: transform 0.2s, opacity 0.2s;
+            }
+            .balloon::after{
+                content: '';
+                position: absolute;
+                bottom: -3px;
+                left: 8px;
+                border-left: 2px solid transparent;
+                border-right: 2px solid transparent;
+                border-bottom: 4px solid inherit;
+            }
+            #basket{
+                position: absolute;
+                bottom: 0;
+                left: 40%;
+                width: 20%;
+                height: 20%;
+                background-color: #8B4513;
+                border-radius: 5px 5px 10px 10px;
+                border: 4px solid #5A2E0B;
+            }
+            #basket::before{
+                content: '';
+                left:-4px;
+                position: absolute;
+                top: -200%;
+                width: 100%;
+                height: 200%;
+                border-left: 4px solid #555;
+                border-right: 4px solid #555;
+            }
+            #ui-panel{
+                height: 30%;
+                background-color: #f8f8f8;
+                padding: 20px;
+                text-align: center;
+                border-top: 2px solid #ccc;
+                box-sizing:border-box;
+            }
+            .hidden{
+                display: none !important;
+            }
+            .input-area{
+                margin:15px 0px;
+            }
+            input[type="number"]{
+                width:80px;
+                padding:5px;
+                font-size:1rem;
+            }
+            button{
+                padding:8px 15px;
+                font-size:1rem;
+                background-color: #ff7f50;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+            button:hover{
+                background-color: #ff5722;
+            }
+            #feedback-message{
+                color:#d32f2f;
+                font-weight:bold;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="game-area">
+            <div id="sky">
+                <div id="counter-display">HP: </div> <span id="balloon-count">0</span></div>
+                <div id="hot-air-balloon">
+                    <div id="balloons-container"></div>
+                    <div id="basket"></div>
+                </div>
+            </div>
+            <div id="ui-panel">
+                <div id="start-screen">
+                    <h1>ドラゴンクエッション</h1>
+                    <p>答えとの差分だけHPが減ります。卵を守り抜け</p>
+                    <button onclick="startGame()">スタート</button>
+                </div>
+                <div id="quiz-screen" class="hidden">
+                    <h3 id="question-text">問題文がここに出ます</h3>
+                    <div class="input-area">
+                        <input type="number" id="answer-input" placeholder="数字を入力">
+                        <button id="submit-button" onclick="submitAnswer()">解答する</button>
+                    </div>
+                    <div id="feedback-message"></div>
+                </div>
+
+                <div id="result-screen" class="hidden">
+                    <h2 id="result-title"></h2>
+                    <p id="result-message"></p>
+                    <button onclick="startGame()">もう一度遊ぶ</button>
+                </div>
+            </div>
+        </div>
+    </body>
+    <script>
+        console.log("temp1")
+        const API_BASE="/api";
+        const colors=["#FF5733","#33FF57","#3357FF","#F1C40F","#9B59B6","#E67E22","#1ABC9C"];
+        let balloonsArray=[];
+
+        const startScreen=document.getElementById('start-screen');
+        const quizScreen=document.getElementById('quiz-screen');
+        const resultScreen=document.getElementById('result-screen');
+        const questionText=document.getElementById('question-text');
+        const answerInput=document.getElementById('answer-input');
+        const feedbackMessage=document.getElementById('feedback-message');
+        const ballooncount=document.getElementById('balloon-count');
+        const balloonsContainer=document.getElementById('balloons-container');
+        const submitButton=document.getElementById('submit-button');
+
+        function renderballoons(count){
+            console.log("temp2")
+            balloonsContainer.innerHTML="";
+            balloonsArray=[];
+            console.log("temp1",count);
+            for(let i=0;i<count;i++){
+                const balloon=document.createElement('div');
+                balloon.classList.add('balloon');
+                const color= colors[Math.floor(Math.random()*colors.length)];
+                balloon.style.backgroundColor=color;
+                balloon.style.borderColor=color;
+
+                const angle= Math.random()*2*Math.PI;
+                const maxradius= 50;
+                const r= maxradius*Math.pow(Math.random(),0.8);
+                const x= 50 +r * Math.cos(angle);
+                const y= 50 +r * Math.sin(angle);
+                balloon.style.left = `calc(${x}% - 20px)`;
+                balloon.style.top = `calc(${y}% - 22.5px)`;
+                balloonsContainer.appendChild(balloon);
+                balloonsArray.push(balloon);
+            }
+            ballooncount.innerText=count;
+        }
+        function popBalloons(difference,remaining){
+            let popped=0;
+            const interval=setInterval(()=>{
+                if(popped >=difference || balloonsArray.length===0){
+                    clearInterval(interval);
+                    ballooncount.innerText=remaining;
+                    return;
+                }    
+                const balloonToPop=balloonsArray.pop();
+                if(balloonToPop){
+                    balloonToPop.style.transform='scale(1.5)';
+                    balloonToPop.style.opacity='0';
+                    setTimeout(()=>{
+                        balloonToPop.remove();
+                    },200);
+                }
+                popped++;
+                
+                ballooncount.innerText= remaining + (difference - popped);
+            },50);
+        }
+
+        async function startGame(){
+            startScreen.classList.add('hidden');
+            resultScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            feedbackMessage.innerText="";
+            answerInput.value="";
+            const response=await fetch(`${API_BASE}/start`,{method:'POST'});
+            const data=await response.json();
+            questionText.innerText=data.question.text;
+            renderballoons(data.gameState.balloons);
+        }
+
+        async function submitAnswer(){
+            const answer=parseInt(answerInput.value,10);
+            if(isNaN(answer)){
+                feedbackMessage.innerText="数字を入力してください";
+                return;
+            }
+            const response=await fetch(`${API_BASE}/answer`,{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({answer:answer})
+            });
+            const data=await response.json();
+            feedbackMessage.innerHTML="正解は "+data.correctAnswer+" でした。<br>差分: "+data.difference+"個の風船が割れます";
+            popBalloons(data.difference,data.remainingBalloons);
+            answerInput.value="";
+            answerInput.classList.add('hidden');
+            submitButton.classList.add('hidden');
+
+            setTimeout(()=>{
+                if (data.remainingBalloons<=0||!data.nextQuestion) {
+                    console.log("temp4")
+                    quizScreen.classList.add('hidden');
+                    resultScreen.classList.remove('hidden');
+                    document.getElementById('result-title').innerText=data.gameState.isCleared?"ゲームクリア！":"ゲームオーバー";
+                    document.getElementById('result-message').innerText="最終的な風船の数"+data.remainingBalloons+"個でした。";
+                } else {
+                    answerInput.classList.remove('hidden');
+                    submitButton.classList.remove('hidden');
+                    questionText.innerText=data.nextQuestion.text;
+                    feedbackMessage.innerText="";
+                }
+            },2000 + (data.difference*50));
+            Answer
+            
+        }
+           
+    </script>
+
+
+</html>

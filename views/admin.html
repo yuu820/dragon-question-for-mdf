@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>問題管理 | ドラゴンクエッション</title>
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+            --ink: #342923;
+            --muted: #786b63;
+            --line: #e6ddd5;
+            --surface: #fffdf9;
+            --accent: #d95f37;
+            --accent-dark: #ad4020;
+            --danger: #bd352f;
+            --success: #2f8054;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 12% 5%, rgba(255,255,255,.7), transparent 25%),
+                linear-gradient(145deg, #d8eef0, #f4e8d0 48%, #dec5aa);
+        }
+
+        button, input, textarea { font: inherit; }
+        button, a { -webkit-tap-highlight-color: transparent; }
+
+        .topbar {
+            border-bottom: 1px solid rgba(73, 49, 35, .14);
+            background: rgba(255, 253, 249, .88);
+            backdrop-filter: blur(12px);
+        }
+
+        .topbar-inner {
+            width: min(1180px, calc(100% - 32px));
+            min-height: 68px;
+            margin: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .brand {
+            margin: 0;
+            color: #69452f;
+            font-size: 1.1rem;
+            font-weight: 900;
+        }
+
+        .back-link {
+            color: #69452f;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        .back-link:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+        main {
+            width: min(1180px, calc(100% - 32px));
+            margin: 38px auto 70px;
+        }
+
+        .page-heading {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 24px;
+            margin-bottom: 22px;
+        }
+
+        h1 { margin: 0 0 8px; font-size: clamp(1.8rem, 5vw, 2.7rem); }
+        .lead { margin: 0; color: var(--muted); line-height: 1.65; }
+
+        .primary-button,
+        .secondary-button,
+        .icon-button,
+        .table-button {
+            border: 0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 800;
+            transition: transform .15s, filter .15s, background .15s;
+        }
+
+        .primary-button {
+            flex: 0 0 auto;
+            padding: 12px 20px;
+            color: white;
+            background: var(--accent);
+            box-shadow: 0 4px 0 var(--accent-dark);
+        }
+
+        .primary-button:hover { filter: brightness(1.06); transform: translateY(-1px); }
+        button:disabled { cursor: wait; opacity: .6; }
+
+        .panel {
+            overflow: hidden;
+            border: 1px solid rgba(73, 49, 35, .14);
+            border-radius: 20px;
+            background: var(--surface);
+            box-shadow: 0 16px 45px rgba(73, 49, 35, .15);
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .count { margin: 0; font-weight: 900; }
+        .count span { color: var(--accent); font-size: 1.25rem; }
+
+        .search {
+            width: min(380px, 100%);
+            padding: 10px 13px;
+            border: 1px solid #cdbfb5;
+            border-radius: 10px;
+            color: var(--ink);
+            background: white;
+        }
+
+        .search:focus,
+        .field input:focus,
+        .field textarea:focus {
+            outline: 3px solid rgba(217, 95, 55, .15);
+            border-color: var(--accent);
+        }
+
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px 18px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+        th { color: var(--muted); background: #faf6f0; font-size: .82rem; letter-spacing: .05em; white-space: nowrap; }
+        tbody tr:last-child td { border-bottom: 0; }
+        tbody tr:hover { background: #fffbf4; }
+        .id-cell { width: 72px; color: var(--muted); font-variant-numeric: tabular-nums; }
+        .answer-cell { width: 130px; font-weight: 900; font-variant-numeric: tabular-nums; }
+        .question-cell { min-width: 240px; line-height: 1.55; white-space: pre-wrap; }
+        .reference-cell { min-width: 220px; max-width: 360px; color: var(--muted); line-height: 1.55; overflow-wrap: anywhere; white-space: pre-wrap; }
+        .reference-cell a { color: #26718a; }
+        .actions-cell { width: 158px; white-space: nowrap; }
+
+        .table-button { padding: 8px 11px; color: #70452c; background: #f2e6da; }
+        .table-button:hover { background: #e9d6c6; }
+        .table-button.danger { margin-left: 6px; color: var(--danger); background: #fae8e6; }
+        .table-button.danger:hover { background: #f5d5d1; }
+
+        .empty-cell { padding: 64px 20px; color: var(--muted); text-align: center; }
+        .loading { opacity: .55; pointer-events: none; }
+
+        dialog {
+            width: min(620px, calc(100% - 28px));
+            max-height: calc(100vh - 40px);
+            padding: 0;
+            overflow: auto;
+            border: 0;
+            border-radius: 20px;
+            color: var(--ink);
+            background: var(--surface);
+            box-shadow: 0 30px 90px rgba(42, 29, 22, .35);
+        }
+
+        dialog::backdrop { background: rgba(44, 34, 29, .55); backdrop-filter: blur(3px); }
+
+        .dialog-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 22px 24px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .dialog-header h2 { margin: 0; font-size: 1.35rem; }
+        .icon-button { width: 38px; height: 38px; color: var(--muted); background: #f1ebe5; font-size: 1.35rem; }
+        .icon-button:hover { background: #e9dfd6; }
+        .form-body { padding: 24px; }
+
+        .field { display: grid; gap: 8px; margin-bottom: 19px; }
+        .field label { font-weight: 900; }
+        .field-note { color: var(--muted); font-size: .82rem; font-weight: 400; }
+        .required { color: var(--danger); }
+        .field input, .field textarea { width: 100%; padding: 11px 13px; border: 1px solid #cdbfb5; border-radius: 10px; color: var(--ink); background: white; resize: vertical; }
+        .field textarea { min-height: 100px; line-height: 1.55; }
+        #reference-input { min-height: 82px; }
+
+        .form-error { min-height: 24px; margin: 0 0 10px; color: var(--danger); font-weight: 800; }
+        .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; }
+        .secondary-button { padding: 12px 18px; color: #65554c; background: #eee7e1; }
+
+        .toast {
+            position: fixed;
+            z-index: 10;
+            right: 22px;
+            bottom: 22px;
+            max-width: min(420px, calc(100% - 44px));
+            padding: 13px 18px;
+            border-radius: 12px;
+            color: white;
+            background: var(--success);
+            box-shadow: 0 10px 35px rgba(42, 29, 22, .3);
+            font-weight: 800;
+            opacity: 0;
+            transform: translateY(12px);
+            pointer-events: none;
+            transition: opacity .2s, transform .2s;
+        }
+
+        .toast.visible { opacity: 1; transform: translateY(0); }
+        .toast.error { background: var(--danger); }
+
+        @media (max-width: 700px) {
+            main { width: min(100% - 20px, 1180px); margin-top: 26px; }
+            .page-heading { align-items: stretch; flex-direction: column; }
+            .primary-button { width: 100%; }
+            .toolbar { align-items: stretch; flex-direction: column; }
+            .search { width: 100%; }
+            .table-wrap { overflow: visible; }
+            table, tbody { display: block; }
+            thead { display: none; }
+            tbody { padding: 10px; }
+            tbody tr { display: block; margin-bottom: 10px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 14px; }
+            tbody tr:last-child { margin-bottom: 0; }
+            tbody td { display: grid; grid-template-columns: 88px 1fr; gap: 12px; width: auto; max-width: none; padding: 10px 0; border-bottom: 1px dashed var(--line); }
+            tbody td::before { content: attr(data-label); color: var(--muted); font-size: .78rem; font-weight: 900; }
+            tbody td:last-child { border-bottom: 0; }
+            .empty-cell { display: block; padding: 45px 15px; }
+            .empty-cell::before { content: none; }
+            .actions-cell { white-space: normal; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <p class="brand">ドラゴンクエッション</p>
+            <a class="back-link" href="/">← ゲームに戻る</a>
+        </div>
+    </header>
+
+    <main>
+        <div class="page-heading">
+            <div>
+                <h1>問題管理</h1>
+                <p class="lead">ゲームで出題する問題・答え・参考文献を管理します。</p>
+            </div>
+            <button class="primary-button" id="new-button" type="button">＋ 問題を作成</button>
+        </div>
+
+        <section class="panel" id="questions-panel" aria-labelledby="questions-count">
+            <div class="toolbar">
+                <p class="count" id="questions-count"><span id="total-count">0</span> 件の問題</p>
+                <input class="search" id="search-input" type="search" placeholder="問題文・答え・参考文献を検索" aria-label="問題を検索">
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>問題文</th>
+                            <th>答え</th>
+                            <th>参考文献</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="questions-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <dialog id="question-dialog" aria-labelledby="dialog-title">
+        <div class="dialog-header">
+            <h2 id="dialog-title">問題を作成</h2>
+            <button class="icon-button" id="close-dialog-button" type="button" aria-label="閉じる">×</button>
+        </div>
+        <form id="question-form">
+            <div class="form-body">
+                <input id="question-id" type="hidden">
+                <div class="field">
+                    <label for="question-input">問題文 <span class="required">必須</span></label>
+                    <textarea id="question-input" maxlength="500" required placeholder="例：日本で一番高い山は？"></textarea>
+                </div>
+                <div class="field">
+                    <label for="answer-input">答え <span class="required">必須</span></label>
+                    <input id="answer-input" type="number" step="any" required placeholder="数値で入力">
+                </div>
+                <div class="field">
+                    <label for="reference-input">参考文献 <span class="field-note">任意・2000文字まで</span></label>
+                    <textarea id="reference-input" maxlength="2000" placeholder="書籍名、資料名、URLなど"></textarea>
+                </div>
+                <p class="form-error" id="form-error" role="alert"></p>
+                <div class="dialog-actions">
+                    <button class="secondary-button" id="cancel-button" type="button">キャンセル</button>
+                    <button class="primary-button" id="save-button" type="submit">保存する</button>
+                </div>
+            </div>
+        </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+        const API_BASE = '/api/questions';
+        const state = { questions: [], query: '' };
+
+        const panel = document.getElementById('questions-panel');
+        const questionsBody = document.getElementById('questions-body');
+        const totalCount = document.getElementById('total-count');
+        const searchInput = document.getElementById('search-input');
+        const questionDialog = document.getElementById('question-dialog');
+        const dialogTitle = document.getElementById('dialog-title');
+        const questionForm = document.getElementById('question-form');
+        const questionId = document.getElementById('question-id');
+        const questionInput = document.getElementById('question-input');
+        const answerInput = document.getElementById('answer-input');
+        const referenceInput = document.getElementById('reference-input');
+        const formError = document.getElementById('form-error');
+        const saveButton = document.getElementById('save-button');
+        const toast = document.getElementById('toast');
+        let toastTimer;
+
+        async function apiRequest(path = '', options = {}) {
+            const response = await fetch(`${API_BASE}${path}`, {
+                ...options,
+                headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.message || '通信に失敗しました。');
+            return data;
+        }
+
+        async function loadQuestions() {
+            panel.classList.add('loading');
+            try {
+                const data = await apiRequest();
+                state.questions = data.questions;
+                renderQuestions();
+            } catch (error) {
+                questionsBody.replaceChildren(createEmptyRow(error.message));
+                showToast(error.message, true);
+            } finally {
+                panel.classList.remove('loading');
+            }
+        }
+
+        function getVisibleQuestions() {
+            const query = state.query.toLocaleLowerCase('ja');
+            if (!query) return state.questions;
+            return state.questions.filter(item =>
+                item.question.toLocaleLowerCase('ja').includes(query) ||
+                String(item.answer).includes(query) ||
+                item.reference.toLocaleLowerCase('ja').includes(query)
+            );
+        }
+
+        function renderQuestions() {
+            const visibleQuestions = getVisibleQuestions();
+            totalCount.textContent = state.query
+                ? `${visibleQuestions.length} / ${state.questions.length}`
+                : state.questions.length;
+            questionsBody.replaceChildren();
+
+            if (visibleQuestions.length === 0) {
+                const message = state.query ? '検索条件に一致する問題がありません。' : '問題がありません。「問題を作成」から登録してください。';
+                questionsBody.appendChild(createEmptyRow(message));
+                return;
+            }
+
+            visibleQuestions.forEach(item => questionsBody.appendChild(createQuestionRow(item)));
+        }
+
+        function createQuestionRow(item) {
+            const row = document.createElement('tr');
+            row.dataset.id = item.id;
+
+            const idCell = createCell('ID', 'id-cell', item.id);
+            const questionCell = createCell('問題文', 'question-cell', item.question);
+            const answerCell = createCell('答え', 'answer-cell', item.answer);
+            const referenceCell = createCell('参考文献', 'reference-cell', '未登録');
+
+            if (item.reference) {
+                referenceCell.replaceChildren();
+                if (/^https?:\/\/\S+$/i.test(item.reference)) {
+                    const link = document.createElement('a');
+                    link.href = item.reference;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    link.textContent = item.reference;
+                    referenceCell.appendChild(link);
+                } else {
+                    referenceCell.textContent = item.reference;
+                }
+            }
+
+            const actionsCell = document.createElement('td');
+            actionsCell.className = 'actions-cell';
+            actionsCell.dataset.label = '操作';
+            const editButton = document.createElement('button');
+            editButton.type = 'button';
+            editButton.className = 'table-button';
+            editButton.dataset.action = 'edit';
+            editButton.textContent = '編集';
+            const deleteButton = document.createElement('button');
+            deleteButton.type = 'button';
+            deleteButton.className = 'table-button danger';
+            deleteButton.dataset.action = 'delete';
+            deleteButton.textContent = '削除';
+            actionsCell.append(editButton, deleteButton);
+
+            row.append(idCell, questionCell, answerCell, referenceCell, actionsCell);
+            return row;
+        }
+
+        function createCell(label, className, value) {
+            const cell = document.createElement('td');
+            cell.className = className;
+            cell.dataset.label = label;
+            cell.textContent = value;
+            return cell;
+        }
+
+        function createEmptyRow(message) {
+            const row = document.createElement('tr');
+            const cell = document.createElement('td');
+            cell.className = 'empty-cell';
+            cell.colSpan = 5;
+            cell.textContent = message;
+            row.appendChild(cell);
+            return row;
+        }
+
+        function openCreateDialog() {
+            questionForm.reset();
+            questionId.value = '';
+            dialogTitle.textContent = '問題を作成';
+            saveButton.textContent = '作成する';
+            formError.textContent = '';
+            questionDialog.showModal();
+            questionInput.focus();
+        }
+
+        function openEditDialog(item) {
+            questionId.value = item.id;
+            questionInput.value = item.question;
+            answerInput.value = item.answer;
+            referenceInput.value = item.reference;
+            dialogTitle.textContent = `問題 #${item.id} を編集`;
+            saveButton.textContent = '変更を保存';
+            formError.textContent = '';
+            questionDialog.showModal();
+            questionInput.focus();
+        }
+
+        function closeDialog() {
+            if (!saveButton.disabled) questionDialog.close();
+        }
+
+        async function saveQuestion(event) {
+            event.preventDefault();
+            formError.textContent = '';
+
+            if (answerInput.value.trim() === '') {
+                formError.textContent = '答えを入力してください。';
+                answerInput.focus();
+                return;
+            }
+
+            const id = questionId.value;
+            const payload = {
+                question: questionInput.value,
+                answer: Number(answerInput.value),
+                reference: referenceInput.value
+            };
+
+            saveButton.disabled = true;
+            try {
+                const data = await apiRequest(id ? `/${id}` : '', {
+                    method: id ? 'PUT' : 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                if (id) {
+                    state.questions = state.questions.map(item => item.id === data.question.id ? data.question : item);
+                } else {
+                    state.questions.unshift(data.question);
+                }
+                renderQuestions();
+                questionDialog.close();
+                showToast(data.message);
+            } catch (error) {
+                formError.textContent = error.message;
+            } finally {
+                saveButton.disabled = false;
+            }
+        }
+
+        async function deleteQuestion(item, button) {
+            if (!window.confirm(`「${item.question}」を削除しますか？\nこの操作は取り消せません。`)) return;
+            button.disabled = true;
+            try {
+                const data = await apiRequest(`/${item.id}`, { method: 'DELETE' });
+                state.questions = state.questions.filter(question => question.id !== item.id);
+                renderQuestions();
+                showToast(data.message);
+            } catch (error) {
+                button.disabled = false;
+                showToast(error.message, true);
+            }
+        }
+
+        function showToast(message, isError = false) {
+            window.clearTimeout(toastTimer);
+            toast.textContent = message;
+            toast.classList.toggle('error', isError);
+            toast.classList.add('visible');
+            toastTimer = window.setTimeout(() => toast.classList.remove('visible'), 2800);
+        }
+
+        document.getElementById('new-button').addEventListener('click', openCreateDialog);
+        document.getElementById('close-dialog-button').addEventListener('click', closeDialog);
+        document.getElementById('cancel-button').addEventListener('click', closeDialog);
+        questionForm.addEventListener('submit', saveQuestion);
+        searchInput.addEventListener('input', event => {
+            state.query = event.target.value.trim();
+            renderQuestions();
+        });
+
+        questionsBody.addEventListener('click', event => {
+            const button = event.target.closest('button[data-action]');
+            if (!button) return;
+            const row = button.closest('tr');
+            const item = state.questions.find(question => question.id === Number(row.dataset.id));
+            if (!item) return;
+            if (button.dataset.action === 'edit') openEditDialog(item);
+            if (button.dataset.action === 'delete') deleteQuestion(item, button);
+        });
+
+        loadQuestions();
+    </script>
+</body>
+</html>

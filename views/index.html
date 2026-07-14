@@ -1,278 +1,527 @@
 <!DOCTYPE html>
 <html lang="ja">
-    <head>
-        <meta charset="UTF-8">
-        <title>気球バルーンゲーム</title>
-        <style>
-            body{
-                margin: 0;
-                font-family: sans-serif;
-                background-color: #333;
-                display: flex;
-                justify-content: center;
-                align-items: top;
-                height: 100vh;
-            }
-            #game-area{
-                width:100%;
-                height: 100%;
-                background-color: #fff;
-                border-radius: 10px;
-                overflow: hidden;
-                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-                display: flex;
-                flex-direction: column;
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ドラゴンクエッション</title>
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+            --ink: #3f2f27;
+            --panel: rgba(255, 253, 246, 0.94);
+            --accent: #e66b3d;
+            --accent-dark: #bd4826;
+        }
 
-            }
-            #sky{
-                flex:1;
-                background: linear-gradient(to bottom, #87ceeb, #E0F6FF);
-                position: relative;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                height:70%;
-            }
-            #counter-display{
-                position: absolute;
-                top: 10px;
-                left: 10px;
-                font-weight:bold;
-                font-size: 1.2rem;
-                padding: 5px 10px;
-                background-color: rgba(255, 255, 255, 0.8);
-                border-radius: 20px;
-            }
-            #hot-air-balloon{
-                position: relative;
-                width: 75%;
-                height: 75%;
-                margin-top: 5%;
-            }
-            #balloons-container{
-                position: absolute;
-                top: 10%;
-                left: 25%;
-                width: 50%;
-                height: 50%;
-            }
-            .balloon{
-                position: absolute;
-                width: 40px;
-                height: 45px;
-                border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
-                transition: transform 0.2s, opacity 0.2s;
-            }
-            .balloon::after{
-                content: '';
-                position: absolute;
-                bottom: -3px;
-                left: 8px;
-                border-left: 2px solid transparent;
-                border-right: 2px solid transparent;
-                border-bottom: 4px solid inherit;
-            }
-            #basket{
-                position: absolute;
-                bottom: 0;
-                left: 40%;
-                width: 20%;
-                height: 20%;
-                background-color: #8B4513;
-                border-radius: 5px 5px 10px 10px;
-                border: 4px solid #5A2E0B;
-            }
-            #basket::before{
-                content: '';
-                left:-4px;
-                position: absolute;
-                top: -200%;
-                width: 100%;
-                height: 200%;
-                border-left: 4px solid #555;
-                border-right: 4px solid #555;
-            }
-            #ui-panel{
-                height: 30%;
-                background-color: #f8f8f8;
-                padding: 20px;
-                text-align: center;
-                border-top: 2px solid #ccc;
-                box-sizing:border-box;
-            }
-            .hidden{
-                display: none !important;
-            }
-            .input-area{
-                margin:15px 0px;
-            }
-            input[type="number"]{
-                width:80px;
-                padding:5px;
-                font-size:1rem;
-            }
-            button{
-                padding:8px 15px;
-                font-size:1rem;
-                background-color: #ff7f50;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-            }
-            button:hover{
-                background-color: #ff5722;
-            }
-            #feedback-message{
-                color:#d32f2f;
-                font-weight:bold;
-            }
-        </style>
-    </head>
-    <body>
-        <div id="game-area">
-            <div id="sky">
-                <div id="counter-display">風船の数: <span id="balloon-count">0</span></div>
-                <div id="hot-air-balloon">
-                    <div id="balloons-container"></div>
-                    <div id="basket"></div>
-                </div>
-            </div>
-            <div id="ui-panel">
-                <div id="start-screen">
-                    <h1>気球バルーンゲーム</h1>
-                    <p>答えとの差分だけ風船が割れます。風船を守り抜け</p>
-                    <button onclick="startGame()">スタート</button>
-                </div>
-                <div id="quiz-screen" class="hidden">
-                    <h3 id="question-text">問題文がここに出ます</h3>
-                    <div class="input-area">
-                        <input type="number" id="answer-input" placeholder="数字を入力">
-                        <button id="submit-button" onclick="submitAnswer()">解答する</button>
-                    </div>
-                    <div id="feedback-message"></div>
-                </div>
+        * { box-sizing: border-box; }
 
-                <div id="result-screen" class="hidden">
-                    <h2 id="result-title"></h2>
-                    <p id="result-message"></p>
-                    <button onclick="startGame()">もう一度遊ぶ</button>
-                </div>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 15% 20%, rgba(255,255,255,.8) 0 3px, transparent 4px),
+                linear-gradient(150deg, #8fc8d8, #e7d8ae 60%, #c99c72);
+            display: grid;
+            place-items: center;
+            padding: 20px;
+        }
+
+        #game-area {
+            width: min(820px, 100%);
+            min-height: min(760px, calc(100vh - 40px));
+            overflow: hidden;
+            border: 1px solid rgba(76, 53, 36, .18);
+            border-radius: 24px;
+            background: var(--panel);
+            box-shadow: 0 22px 65px rgba(58, 42, 29, .28);
+            display: grid;
+            grid-template-rows: minmax(390px, 1fr) auto;
+        }
+
+        #egg-field {
+            position: relative;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            background:
+                radial-gradient(ellipse at 50% 90%, rgba(95, 65, 43, .18), transparent 40%),
+                linear-gradient(#d8f2f4, #fff8df 72%, #dcc49a 73%);
+        }
+
+        #egg-field::before,
+        #egg-field::after {
+            content: "";
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .45);
+            filter: blur(1px);
+        }
+
+        #egg-field::before { width: 170px; height: 45px; top: 12%; left: 7%; }
+        #egg-field::after { width: 120px; height: 34px; top: 23%; right: 8%; }
+
+        #hp-panel {
+            position: absolute;
+            z-index: 2;
+            top:20px;
+            width: min(760px, calc(100% - 40px));
+            margin:auto 0;
+            padding: 12px 16px;
+            border: 1px solid rgba(76, 53, 36, .12);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, .88);
+            box-shadow: 0 6px 20px rgba(73, 48, 31, .12);
+        }
+
+        #hp-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.05rem;
+            font-weight: 800;
+        }
+
+        #hp-track {
+            height: 12px;
+            margin-top: 8px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #eadfd5;
+        }
+
+        #hp-bar {
+            width: 100%;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #ef5747, #f1a441 55%, #6ebc70);
+            transform-origin: left;
+            transition: width .45s ease;
+        }
+
+        #hp-bar.damage {
+            animation: hp-damage .6s ease;
+        }
+
+        #egg-visual {
+            position: relative;
+            z-index: 1;
+            width: min(340px, 70vw);
+            aspect-ratio: 256 / 240;
+            margin-top: 38px;
+            background-image: url('/assets/egg-stages.png');
+            background-repeat: no-repeat;
+            background-size: 500% 300%;
+            filter: drop-shadow(0 18px 15px rgba(70, 45, 27, .18));
+            will-change: transform;
+        }
+
+        #egg-visual::after {
+            content: "";
+            position: absolute;
+            inset: 12%;
+            border: 5px solid rgba(255, 249, 205, .9);
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #egg-visual.damaged { animation: egg-hit .65s ease; }
+        #egg-visual.damaged::after { animation: crack-flash .55s ease-out; }
+        #egg-visual.breaking { animation: egg-break .95s cubic-bezier(.2, .85, .35, 1); }
+        #egg-visual.breaking::after { animation: break-flash .7s ease-out; }
+
+        #egg-particles {
+            position: absolute;
+            z-index: 2;
+            top: 54%;
+            left: 50%;
+            width: 1px;
+            height: 1px;
+            pointer-events: none;
+        }
+
+        .shell-particle {
+            position: absolute;
+            width: var(--size);
+            height: calc(var(--size) * 1.15);
+            background: linear-gradient(145deg, #fff9df 10%, #dec99e 62%, #a78b69);
+            clip-path: polygon(50% 0, 100% 28%, 82% 100%, 18% 82%, 0 30%);
+            opacity: 0;
+            animation: shell-fragment .78s cubic-bezier(.16, .72, .35, 1) var(--delay) forwards;
+        }
+
+        @keyframes egg-hit {
+            0%, 100% { transform: translateX(0) rotate(0); }
+            15% { transform: translateX(-15px) rotate(-3.5deg) scale(1.02); }
+            32% { transform: translateX(13px) rotate(3deg); }
+            52% { transform: translateX(-9px) rotate(-2deg); }
+            72% { transform: translateX(5px) rotate(1deg); }
+        }
+
+        @keyframes egg-break {
+            0% { transform: translateY(0) rotate(0) scale(1); }
+            12% { transform: translateY(-8px) rotate(-4deg) scale(1.05); }
+            25% { transform: translateY(-4px) rotate(5deg) scale(1.08); }
+            42% { transform: translateY(3px) rotate(-3deg) scale(.98); }
+            62% { transform: translateY(12px) rotate(2deg) scale(.94); }
+            82% { transform: translateY(5px) rotate(-1deg) scale(1.02); }
+            100% { transform: translateY(0) rotate(0) scale(1); }
+        }
+
+        @keyframes crack-flash {
+            0% { opacity: 0; transform: scale(.55); }
+            28% { opacity: .95; }
+            100% { opacity: 0; transform: scale(1.18); }
+        }
+
+        @keyframes break-flash {
+            0% { opacity: 0; transform: scale(.35); }
+            30% { opacity: 1; border-width: 12px; }
+            100% { opacity: 0; transform: scale(1.48); border-width: 2px; }
+        }
+
+        @keyframes hp-damage {
+            0%, 100% { filter: none; }
+            25%, 65% { filter: brightness(1.55) saturate(1.5); box-shadow: 0 0 13px #e94b3c; }
+        }
+
+        @keyframes shell-fragment {
+            0% { opacity: 0; transform: translate(-50%, -50%) rotate(0) scale(.25); }
+            14% { opacity: 1; }
+            100% {
+                opacity: 0;
+                transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(var(--rotation)) scale(.85);
+            }
+        }
+
+        #ui-panel {
+            min-height: 270px;
+            padding: 28px clamp(20px, 6vw, 58px);
+            border-top: 1px solid rgba(76, 53, 36, .15);
+            text-align: center;
+            background: var(--panel);
+        }
+
+        h1, h2, h3 { margin: 0 0 14px; }
+        h1 { color: #70452c; font-size: clamp(1.7rem, 5vw, 2.5rem); }
+        p { line-height: 1.7; }
+
+        .hidden { display: none !important; }
+
+        .input-area {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0 12px;
+        }
+
+        input[type="number"] {
+            width: min(190px, 48vw);
+            padding: 11px 14px;
+            border: 2px solid #d6c4b5;
+            border-radius: 10px;
+            color: var(--ink);
+            font-size: 1rem;
+            background: white;
+        }
+
+        input[type="number"]:focus {
+            outline: 3px solid rgba(230, 107, 61, .18);
+            border-color: var(--accent);
+        }
+
+        button {
+            padding: 11px 20px;
+            border: 0;
+            border-radius: 10px;
+            color: white;
+            background: var(--accent);
+            box-shadow: 0 4px 0 var(--accent-dark);
+            font: inherit;
+            font-weight: 800;
+            cursor: pointer;
+            transition: transform .15s, filter .15s;
+        }
+
+        button:hover { filter: brightness(1.06); transform: translateY(-1px); }
+        button:disabled { cursor: wait; filter: grayscale(.3); opacity: .7; }
+
+        .admin-link {
+            display: inline-block;
+            margin-left: 10px;
+            color: #70452c;
+            font-weight: 800;
+            text-underline-offset: 4px;
+        }
+
+        #feedback-message {
+            min-height: 48px;
+            color: #a53e28;
+            font-weight: 800;
+            line-height: 1.5;
+        }
+
+        #reference-display {
+            margin: 12px auto 0;
+            padding-top: 12px;
+            border-top: 1px solid #ded3ca;
+            color: #71645c;
+            font-size: .88rem;
+            line-height: 1.55;
+            overflow-wrap: anywhere;
+        }
+
+        #reference-display strong {
+            margin-right: 7px;
+            color: #55473f;
+        }
+
+        #reference-display a {
+            color: #26718a;
+            text-underline-offset: 3px;
+        }
+
+        @media (max-width: 540px) {
+            body { padding: 0; }
+            #game-area { min-height: 100vh; border: 0; border-radius: 0; grid-template-rows: minmax(350px, 55vh) auto; }
+            #egg-visual { width: min(280px, 78vw); }
+            #hp-panel { top: 12px; left: 12px; }
+            #ui-panel { padding: 24px 18px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+        }
+    </style>
+</head>
+<body>
+    <main id="game-area">
+        <section id="egg-field" aria-label="たまごの状態">
+            <div id="hp-panel">
+                <div id="hp-row"><span>HP</span><span><strong id="hp-count">200</strong> / <strong id="hp-max">200</strong></span></div>
+                <div id="hp-track" aria-hidden="true"><div id="hp-bar"></div></div>
             </div>
-        </div>
-    </body>
+            <div id="egg-visual" role="img" aria-label="無傷のたまご"></div>
+            <div id="egg-particles" aria-hidden="true"></div>
+        </section>
+
+        <section id="ui-panel">
+            <div id="start-screen">
+                <h1>ドラゴンクエッション</h1>
+                <p>答えとの差分だけHPが減り、たまごにヒビが入ります。<br>たまごを最後まで守り抜こう！</p>
+                <button type="button" onclick="startGame()">スタート</button>
+                <a class="admin-link" href="/admin.html">問題を管理</a>
+            </div>
+
+            <div id="quiz-screen" class="hidden">
+                <h3 id="question-text">問題文がここに出ます</h3>
+                <div class="input-area">
+                    <input type="number" id="answer-input" inputmode="numeric" placeholder="数字を入力" aria-label="答え">
+                    <button type="button" id="submit-button" onclick="submitAnswer()">解答する</button>
+                </div>
+                <div id="feedback-message" aria-live="polite"></div>
+                <aside id="reference-display" class="hidden" aria-label="参考文献">
+                    <strong>参考文献</strong><span id="reference-content"></span>
+                </aside>
+            </div>
+
+            <div id="result-screen" class="hidden">
+                <h2 id="result-title"></h2>
+                <p id="result-message"></p>
+                <button type="button" onclick="startGame()">もう一度遊ぶ</button>
+            </div>
+        </section>
+    </main>
+
     <script>
-        console.log("temp1")
-        const API_BASE="/api";
-        const colors=["#FF5733","#33FF57","#3357FF","#F1C40F","#9B59B6","#E67E22","#1ABC9C"];
-        let balloonsArray=[];
+        const API_BASE = '/api';
+        const EGG_POSITIONS = {
+            1: '0% 0%',
+            2: '25% 0%',
+            3: '50% 0%',
+            4: '75% 0%',
+            5: '100% 0%',
+            6: '0% 50%',
+            7: '25% 50%',
+            15: '100% 100%'
+        };
 
-        const startScreen=document.getElementById('start-screen');
-        const quizScreen=document.getElementById('quiz-screen');
-        const resultScreen=document.getElementById('result-screen');
-        const questionText=document.getElementById('question-text');
-        const answerInput=document.getElementById('answer-input');
-        const feedbackMessage=document.getElementById('feedback-message');
-        const ballooncount=document.getElementById('balloon-count');
-        const balloonsContainer=document.getElementById('balloons-container');
-        const submitButton=document.getElementById('submit-button');
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const questionText = document.getElementById('question-text');
+        const answerInput = document.getElementById('answer-input');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const referenceDisplay = document.getElementById('reference-display');
+        const referenceContent = document.getElementById('reference-content');
+        const hpCount = document.getElementById('hp-count');
+        const hpMax = document.getElementById('hp-max');
+        const hpBar = document.getElementById('hp-bar');
+        const eggVisual = document.getElementById('egg-visual');
+        const eggParticles = document.getElementById('egg-particles');
+        const submitButton = document.getElementById('submit-button');
 
-        function renderballoons(count){
-            console.log("temp2")
-            balloonsContainer.innerHTML="";
-            balloonsArray=[];
-            console.log("temp1",count);
-            for(let i=0;i<count;i++){
-                const balloon=document.createElement('div');
-                balloon.classList.add('balloon');
-                const color= colors[Math.floor(Math.random()*colors.length)];
-                balloon.style.backgroundColor=color;
-                balloon.style.borderColor=color;
+        function eggStageForHp(hp, maxHp) {
+            if (hp <= 0) return 15;
+            if (hp >= maxHp) return 1;
+            return Math.min(7, Math.ceil(((maxHp - hp) / maxHp) * 6) + 1);
+        }
 
-                const angle= Math.random()*2*Math.PI;
-                const maxradius= 50;
-                const r= maxradius*Math.pow(Math.random(),0.8);
-                const x= 50 +r * Math.cos(angle);
-                const y= 50 +r * Math.sin(angle);
-                balloon.style.left = `calc(${x}% - 20px)`;
-                balloon.style.top = `calc(${y}% - 22.5px)`;
-                balloonsContainer.appendChild(balloon);
-                balloonsArray.push(balloon);
+        function renderHp(hp, maxHp, animateHit = false) {
+            const safeHp = Math.max(0, Math.min(maxHp, hp));
+            const stage = eggStageForHp(safeHp, maxHp);
+            hpCount.textContent = safeHp;
+            hpMax.textContent = maxHp;
+            hpBar.style.width = `${(safeHp / maxHp) * 100}%`;
+            eggVisual.style.backgroundPosition = EGG_POSITIONS[stage];
+            eggVisual.setAttribute('aria-label', stage === 15 ? '割れたたまご' : `たまごのヒビ段階 ${stage}`);
+
+            if (animateHit) {
+                playDamageAnimation(stage === 15);
+            } else {
+                eggVisual.classList.remove('damaged', 'breaking');
+                hpBar.classList.remove('damage');
+                eggParticles.replaceChildren();
             }
-            ballooncount.innerText=count;
-        }
-        function popBalloons(difference,remaining){
-            let popped=0;
-            const interval=setInterval(()=>{
-                if(popped >=difference || balloonsArray.length===0){
-                    clearInterval(interval);
-                    ballooncount.innerText=remaining;
-                    return;
-                }    
-                const balloonToPop=balloonsArray.pop();
-                if(balloonToPop){
-                    balloonToPop.style.transform='scale(1.5)';
-                    balloonToPop.style.opacity='0';
-                    setTimeout(()=>{
-                        balloonToPop.remove();
-                    },200);
-                }
-                popped++;
-                
-                ballooncount.innerText= remaining + (difference - popped);
-            },50);
         }
 
-        async function startGame(){
-            startScreen.classList.add('hidden');
-            resultScreen.classList.add('hidden');
-            quizScreen.classList.remove('hidden');
-            feedbackMessage.innerText="";
-            answerInput.value="";
-            const response=await fetch(`${API_BASE}/start`,{method:'POST'});
-            const data=await response.json();
-            questionText.innerText=data.question.text;
-            renderballoons(data.gameState.balloons);
+        function playDamageAnimation(isBreaking) {
+            const animationClass = isBreaking ? 'breaking' : 'damaged';
+            eggVisual.classList.remove('damaged', 'breaking');
+            hpBar.classList.remove('damage');
+            void eggVisual.offsetWidth;
+            eggVisual.classList.add(animationClass);
+            hpBar.classList.add('damage');
+            spawnShellParticles(isBreaking ? 18 : 8, isBreaking);
+
+            window.setTimeout(() => {
+                eggVisual.classList.remove(animationClass);
+                hpBar.classList.remove('damage');
+            }, 1000);
         }
 
-        async function submitAnswer(){
-            const answer=parseInt(answerInput.value,10);
-            if(isNaN(answer)){
-                feedbackMessage.innerText="数字を入力してください";
+        function spawnShellParticles(count, isBreaking) {
+            eggParticles.replaceChildren();
+            const spread = isBreaking ? 150 : 90;
+
+            for (let index = 0; index < count; index++) {
+                const particle = document.createElement('span');
+                const angle = ((Math.PI * 2) / count) * index + (Math.random() * .35);
+                const distance = spread * (.55 + Math.random() * .55);
+                particle.className = 'shell-particle';
+                particle.style.setProperty('--x', `${Math.cos(angle) * distance}px`);
+                particle.style.setProperty('--y', `${Math.sin(angle) * distance - (isBreaking ? 30 : 10)}px`);
+                particle.style.setProperty('--rotation', `${Math.round(Math.random() * 540 - 270)}deg`);
+                particle.style.setProperty('--size', `${Math.round(7 + Math.random() * (isBreaking ? 12 : 7))}px`);
+                particle.style.setProperty('--delay', `${Math.round(Math.random() * 90)}ms`);
+                particle.addEventListener('animationend', () => particle.remove(), { once: true });
+                eggParticles.appendChild(particle);
+            }
+        }
+
+        function showScreen(screen) {
+            [startScreen, quizScreen, resultScreen].forEach(item => item.classList.add('hidden'));
+            screen.classList.remove('hidden');
+        }
+
+        function renderReference(reference) {
+            const value = typeof reference === 'string' ? reference.trim() : '';
+            referenceContent.replaceChildren();
+            referenceDisplay.classList.toggle('hidden', !value);
+            if (!value) return;
+
+            if (/^https?:\/\/\S+$/i.test(value)) {
+                const link = document.createElement('a');
+                link.href = value;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.textContent = value;
+                referenceContent.appendChild(link);
+            } else {
+                referenceContent.textContent = value;
+            }
+        }
+
+        async function startGame() {
+            showScreen(quizScreen);
+            feedbackMessage.textContent = '';
+            renderReference('');
+            answerInput.value = '';
+            answerInput.disabled = true;
+            submitButton.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/start`, { method: 'POST' });
+                if (!response.ok) throw new Error('ゲームを開始できませんでした。');
+                const data = await response.json();
+                questionText.textContent = data.question.text;
+                renderReference(data.question.reference);
+                renderHp(data.gameState.hp, data.gameState.maxHp);
+                answerInput.disabled = false;
+                submitButton.disabled = false;
+                answerInput.focus();
+            } catch (error) {
+                feedbackMessage.textContent = error.message;
+            }
+        }
+
+        async function submitAnswer() {
+            if (answerInput.value.trim() === '') {
+                feedbackMessage.textContent = '数字を入力してください。';
                 return;
             }
-            const response=await fetch(`${API_BASE}/answer`,{
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({answer:answer})
-            });
-            const data=await response.json();
-            feedbackMessage.innerHTML="正解は "+data.correctAnswer+" でした。<br>差分: "+data.difference+"個の風船が割れます";
-            popBalloons(data.difference,data.remainingBalloons);
-            answerInput.value="";
-            answerInput.classList.add('hidden');
-            submitButton.classList.add('hidden');
+            const answer = Number(answerInput.value);
+            if (!Number.isFinite(answer)) {
+                feedbackMessage.textContent = '数字を入力してください。';
+                return;
+            }
 
-            setTimeout(()=>{
-                if (data.remainingBalloons<=0||!data.nextQuestion) {
-                    console.log("temp4")
-                    quizScreen.classList.add('hidden');
-                    resultScreen.classList.remove('hidden');
-                    document.getElementById('result-title').innerText=data.gameState.isCleared?"ゲームクリア！":"ゲームオーバー";
-                    document.getElementById('result-message').innerText="最終的な風船の数"+data.remainingBalloons+"個でした。";
-                } else {
-                    answerInput.classList.remove('hidden');
-                    submitButton.classList.remove('hidden');
-                    questionText.innerText=data.nextQuestion.text;
-                    feedbackMessage.innerText="";
-                }
-            },2000 + (data.difference*50));
-            Answer
-            
+            answerInput.disabled = true;
+            submitButton.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/answer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ answer })
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || '回答を送信できませんでした。');
+
+                feedbackMessage.innerHTML = `正解は ${data.correctAnswer} でした。<br>差分 ${data.difference}、HPが ${data.hpLost} 減りました。`;
+                renderHp(data.remainingHp, data.gameState.maxHp, data.hpLost > 0);
+                answerInput.value = '';
+
+                window.setTimeout(() => {
+                    if (data.gameState.isGameOver || data.gameState.isCleared) {
+                        showScreen(resultScreen);
+                        document.getElementById('result-title').textContent = data.gameState.isCleared ? 'ゲームクリア！' : 'ゲームオーバー';
+                        document.getElementById('result-message').textContent = data.gameState.isCleared
+                            ? `たまごを守り抜きました！ 残りHPは ${data.remainingHp} です。`
+                            : 'HPが0になり、たまごが割れてしまいました。';
+                        return;
+                    }
+
+                    questionText.textContent = data.nextQuestion.text;
+                    renderReference(data.nextQuestion.reference);
+                    feedbackMessage.textContent = '';
+                    answerInput.disabled = false;
+                    submitButton.disabled = false;
+                    answerInput.focus();
+                }, 1100);
+            } catch (error) {
+                feedbackMessage.textContent = error.message;
+                answerInput.disabled = false;
+                submitButton.disabled = false;
+            }
         }
-           
+
+        answerInput.addEventListener('keydown', event => {
+            if (event.key === 'Enter' && !submitButton.disabled) submitAnswer();
+        });
+
+        renderHp(200, 200);
     </script>
-
-
+</body>
 </html>
