@@ -4,7 +4,7 @@ const path=require('path');
 const db=require('./db.js');
 const app=express();
 
-const PORT=Number(process.env.PORT) || 3000;
+const PORT=Number(process.env.PORT) || 3002;
 const MAX_HP=200;
 const questions_per_game=5;
 const MAX_QUESTION_LENGTH=500;
