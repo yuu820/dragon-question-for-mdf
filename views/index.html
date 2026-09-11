@@ -122,7 +122,7 @@
             <div id="egg-visual"></div><div id="egg-particles"></div>
         </div>
         <div id="hp-panel" class="hud-panel hidden">
-            <div id="hp-row"><span>HP</span><span><strong id="hp-count">200</strong> / <strong id="hp-max">200</strong></span></div>
+            <div id="hp-row"><span>HP</span><span><strong id="hp-count">100</strong> / <strong id="hp-max">100</strong></span></div>
             <div id="hp-track"><div id="hp-bar"></div></div>
         </div>
         <div id="top-hud" class="hud-panel hidden">
@@ -284,7 +284,7 @@
                 await playClashEffect(document.getElementById('answer-input')?.value || '?', data.correctAnswer, data.difference);
                 
                 topHud.classList.remove('hidden'); // 問題文復活
-                renderHp(data.remainingHp, 200, data.hpLost > 0);
+                renderHp(data.remainingHp, 100, data.hpLost > 0);
             } else {
                 // コントローラー側はモニターのアニメーションが終わるまで待つ
                 const feedback = document.getElementById('c-feedback');

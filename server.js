@@ -11,7 +11,7 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
 const PORT = Number(process.env.PORT) || 3002;
-const MAX_HP = 200;
+const MAX_HP = 100;
 const questions_per_game = 5;
 const MAX_QUESTION_LENGTH = 500;
 const MAX_REFERENCE_LENGTH = 2000;
